@@ -1,13 +1,10 @@
 ESX = nil
 
-Citizen.CreateThread(function()
-	while ESX == nil do
-		TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end)
-		Citizen.Wait(0)
-	end
-
+CreateThread(function()
+	while ESX == nil do TriggerEvent('esx:getSharedObject', function(obj) ESX = obj end) Wait(100) end
 	local GUI, MenuType = {}, 'default'
 	GUI.Time = 0
+	local vrijeme = GetGameTimer()
 
 	local openMenu = function(namespace, name, data)
 		SendNUIMessage({
@@ -32,15 +29,18 @@ Citizen.CreateThread(function()
 	AddEventHandler('esx_menu_default:message:menu_submit', function(data)
 		local menu = ESX.UI.Menu.GetOpened(MenuType, data._namespace, data._name)
 
-		if menu.submit ~= nil then
-			menu.submit(data, menu)
+		if menu.submit then
+			if GetGameTimer()-vrijeme > 200 then
+				vrijeme = GetGameTimer()
+				menu.submit(data, menu)
+			end
 		end
 	end)
 
 	AddEventHandler('esx_menu_default:message:menu_cancel', function(data)
 		local menu = ESX.UI.Menu.GetOpened(MenuType, data._namespace, data._name)
 
-		if menu.cancel ~= nil then
+		if menu.cancel then
 			menu.cancel(data, menu)
 		end
 	end)
@@ -58,14 +58,14 @@ Citizen.CreateThread(function()
 			end
 		end
 
-		if menu.change ~= nil then
+		if menu.change then
 			menu.change(data, menu)
 		end
 	end)
 
-	Citizen.CreateThread(function()
+	CreateThread(function()
 		while true do
-			Citizen.Wait(10)
+			Wait(15)
 
 			if IsControlPressed(0, 18) and IsInputDisabled(0) and (GetGameTimer() - GUI.Time) > 150 then
 				SendNUIMessage({action = 'controlPressed', control = 'ENTER'})
